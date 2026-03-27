@@ -1,53 +1,58 @@
 const { Router } = require('express');
+const { check } = require('express-validator');
 
-const { heroesGet,
-        heroeIdGet,
-        heroesComoGet,
-        heroesPost,
-        heroePut,
-        heroeDelete
+const {
+    heroesGet,
+    heroeIdGet,
+    heroesComoGet,
+    heroesPost,
+    heroePut,
+    heroeDelete
 } = require('../controllers/heroes.controller');
 
-const { validarJWT} = require('../middlewares/validar-jwt');
-
-const { check } = require('express-validator');
+const { validarJWT } = require('../middlewares/validar-jwt');
 const { validarCampos } = require('../middlewares/validar-campos');
 const { existeHeroePorIdMySql } = require('../helpers/db-validatorsMySql');
 
-
-
 const router = Router();
 
-//READ (3) - GET
+// READ
 router.get('/', heroesGet);
-
-router.get('/:id', 
-    check('id').custom( existeHeroePorIdMySql),
-    validarCampos,        
-    heroeIdGet);
 
 router.get('/como/:termino', heroesComoGet);
 
-//CREATE - POST - INSERT
-router.post('/', heroesPost);
+router.get('/:id',
+    check('id').custom(existeHeroePorIdMySql),
+    validarCampos,
+    heroeIdGet
+);
 
-//UPDATE - PUT 
-router.put('/:id', 
+// CREATE
+router.post('/',
     validarJWT,
-    check('id').custom( existeHeroePorIdMySql),
+    check('nombre', 'El nombre es obligatorio').not().isEmpty(),
+    check('bio', 'La bio es obligatoria').not().isEmpty(),
+    check('img', 'La imagen es obligatoria').not().isEmpty(),
+    check('productora_id', 'El productora_id debe ser numérico').optional().isInt(),
+    validarCampos,
+    heroesPost
+);
 
-    validarCampos,   
+// UPDATE
+router.put('/:id',
+    validarJWT,
+    check('id').custom(existeHeroePorIdMySql),
+    check('productora_id', 'El productora_id debe ser numérico').optional().isInt(),
+    validarCampos,
+    heroePut
+);
 
-    heroePut);
-
-//DELETE - DELETE
-router.delete('/:id', 
-    check('id').custom( existeHeroePorIdMySql),
-    
-    validarCampos,   
-    
-    heroeDelete);
-
-//router.patch('/', usuariosPatch);
+// DELETE
+router.delete('/:id',
+    validarJWT,
+    check('id').custom(existeHeroePorIdMySql),
+    validarCampos,
+    heroeDelete
+);
 
 module.exports = router;
