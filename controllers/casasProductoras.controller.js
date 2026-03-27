@@ -77,6 +77,7 @@ const buscarCasas = async (req, res) => {
 // Crear casa productora
 const crearCasa = async (req, res) => {
     try {
+        console.log(req.body);
         const { nombre, pais, tipo_medio, heroes_famosos } = req.body;
 
         const result = await createCasa({

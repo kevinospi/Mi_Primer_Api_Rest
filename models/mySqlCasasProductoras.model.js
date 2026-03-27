@@ -2,7 +2,9 @@ const { bdmysqlNube } = require('../database/mySqlConnection');
 
 // Obtener todas
 const getCasas = async () => {
-    const [rows] = await bdmysqlNube.query('SELECT * FROM casas_productoras_heroes');
+    const [rows] = await bdmysqlNube.query(
+        'SELECT * FROM casas_productoras_heroes'
+    );
     return rows;
 };
 
@@ -10,11 +12,14 @@ const getCasas = async () => {
 const getCasaById = async (id) => {
     const [rows] = await bdmysqlNube.query(
         'SELECT * FROM casas_productoras_heroes WHERE id = ?',
-        [id]
+        {
+            replacements: [id]
+        }
     );
     return rows[0];
 };
 
+// Buscar por texto
 const searchCasas = async (texto) => {
     const [rows] = await bdmysqlNube.query(
         `SELECT * FROM casas_productoras_heroes
@@ -22,7 +27,9 @@ const searchCasas = async (texto) => {
          OR pais LIKE ?
          OR tipo_medio LIKE ?
          OR heroes_famosos LIKE ?`,
-        [`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`]
+        {
+            replacements: [`%${texto}%`, `%${texto}%`, `%${texto}%`, `%${texto}%`]
+        }
     );
     return rows;
 };
@@ -35,7 +42,9 @@ const createCasa = async (data) => {
         `INSERT INTO casas_productoras_heroes
         (nombre, pais, tipo_medio, heroes_famosos)
         VALUES (?, ?, ?, ?)`,
-        [nombre, pais, tipo_medio, heroes_famosos]
+        {
+            replacements: [nombre, pais, tipo_medio, heroes_famosos]
+        }
     );
 
     return result;
@@ -49,7 +58,9 @@ const updateCasa = async (id, data) => {
         `UPDATE casas_productoras_heroes
         SET nombre = ?, pais = ?, tipo_medio = ?, heroes_famosos = ?
         WHERE id = ?`,
-        [nombre, pais, tipo_medio, heroes_famosos, id]
+        {
+            replacements: [nombre, pais, tipo_medio, heroes_famosos, id]
+        }
     );
 
     return result;
@@ -59,7 +70,9 @@ const updateCasa = async (id, data) => {
 const tieneHeroes = async (id) => {
     const [rows] = await bdmysqlNube.query(
         'SELECT * FROM heroes WHERE productora_id = ?',
-        [id]
+        {
+            replacements: [id]
+        }
     );
     return rows.length > 0;
 };
@@ -68,7 +81,9 @@ const tieneHeroes = async (id) => {
 const deleteCasa = async (id) => {
     const [result] = await bdmysqlNube.query(
         'DELETE FROM casas_productoras_heroes WHERE id = ?',
-        [id]
+        {
+            replacements: [id]
+        }
     );
     return result;
 };
