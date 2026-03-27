@@ -10,8 +10,8 @@ const {
     eliminarCasa
 } = require('../controllers/casasProductoras.controller');
 
-const validarJWT = require('../middlewares/validar-jwt');
-const validarCampos = require('../middlewares/validar-campos');
+const { validarJWT } = require('../middlewares/validar-jwt');
+const { validarCampos } = require('../middlewares/validar-campos');
 
 const router = Router();
 
