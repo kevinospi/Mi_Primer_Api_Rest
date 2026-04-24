@@ -1,49 +1,69 @@
 const { DataTypes } = require('sequelize');
-const { bdmysqlNube } = require('../database/mySqlConnection');
+const { bdmysql, bdmysqlNube } = require('../database/mySqlConnection');
+
 
 const Heroes = bdmysqlNube.define('heroes',
     {
-        id: {
+        // Model attributes are defined here
+        'id': {
             type: DataTypes.INTEGER,
-            primaryKey: true,
-            autoIncrement: true
+            //allowNull: false,
+            primaryKey: true
         },
 
-        nombre: {
+
+        'nombre': {
             type: DataTypes.STRING,
             allowNull: false
+            // allowNull defaults to true
         },
 
-        bio: {
+
+        'bio': {
             type: DataTypes.TEXT,
             allowNull: false
+            // allowNull defaults to true
         },
 
-        img: {
+        'img': {
             type: DataTypes.STRING,
             allowNull: false
+            // allowNull defaults to true
         },
 
-        aparicion: {
+        'aparicion': {
             type: DataTypes.DATE
+            // allowNull defaults to true
         },
 
-        casa: {
+        'casa': {
             type: DataTypes.STRING
+            // allowNull defaults to true
         },
 
-        productora_id: {
-            type: DataTypes.INTEGER,
-            allowNull: true
-        }
+        'productora_id': {
+            type: DataTypes.INTEGER
+            // allowNull defaults to true
+        },
+
+
     },
+
     {
+        //Maintain table name don't plurilize
         freezeTableName: true,
+
+
+        // I don't want createdAt
         createdAt: false,
+
+
+        // I don't want updatedAt
         updatedAt: false
     }
 );
 
+
 module.exports = {
     Heroes,
-};
+}

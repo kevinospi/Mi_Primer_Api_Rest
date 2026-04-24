@@ -1,214 +1,251 @@
-const { response, request } = require('express');
+const { response, request } = require('express')
 
 const { Heroes } = require('../models/mySqlHeroes.model');
-const { bdmysqlNube } = require('../database/mySqlConnection');
+const { bdmysql, bdmysqlNube } = require('../database/mySqlConnection');
 
 const heroesGet = async (req, res = response) => {
+
     try {
+  
+        //SELECT * FROM heroes
         const unosHeroes = await Heroes.findAll();
+
 
         res.json({
             ok: true,
             data: unosHeroes
         });
+
+
     } catch (error) {
         console.log(error);
         res.status(500).json({
             ok: false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
+
     }
-};
+}
+
 
 const heroeIdGet = async (req, res = response) => {
+
     const { id } = req.params;
 
     try {
+
+        //SELECT * FROM heroes WHERE id = ?id
         const unHeroe = await Heroes.findByPk(id);
+
 
         if (!unHeroe) {
             return res.status(404).json({
                 ok: false,
                 msg: 'No existe un heroe con el id: ' + id
-            });
+            })
         }
 
         res.json({
             ok: true,
             data: unHeroe
         });
+
+
     } catch (error) {
         console.log(error);
         res.status(500).json({
             ok: false,
             msg: 'Hable con el Administrador',
             err: error
-        });
-    }
-};
+        })
 
-const heroesComoGet = async (req = request, res = response) => {
+    }
+
+
+
+    /*
+    const query = req.query;
+
+
+    //Desestructuracion de argumentos
+    const { q, nombre = 'No name', apikey, page=1, limit=10} = req.query;
+
+
+    //res.send('Hello World')
+    res.json({
+        //ok:true,
+        msg:'get API - Controller',
+        query,
+        q,
+        nombre,
+        apikey,
+        page,
+        limit
+       })
+
+
+      */
+}
+
+
+const heroesComoGet = async(req = request, res = response) => {
+
+
     const { termino } = req.params;
 
     try {
-        const [results] = await bdmysqlNube.query(
-            "SELECT nombre, bio FROM heroes WHERE nombre LIKE ? ORDER BY nombre",
-            {
-                replacements: [`%${termino}%`]
-            }
+        const [results, metadata] = await bdmysqlNube.query(
+            "SELECT nombre,bio" +
+            " FROM heroes" +
+            " WHERE nombre like '%" + termino + "%'" +
+            " ORDER BY nombre"
         );
 
+
         res.json({
-            ok: true,
+            ok:true,
             data: results,
         });
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            ok: false,
+        res.status(500).json({ok:false,
             msg: 'Hable con el Administrador',
             err: error
+
+
         });
     }
 };
 
+
 const heroesPost = async (req, res = response) => {
-    const { nombre, bio, img, aparicion, casa, productora_id } = req.body;
+
+    const { nombre, bio, img, aparicion , casa} = req.body;
+
+    const heroe = new Heroes({ nombre, bio,img, aparicion, casa });
 
     try {
-        const existeHeroe = await Heroes.findOne({ where: { nombre } });
+
+        const existeHeroe = await Heroes.findOne({ where: { nombre: nombre} });
 
         if (existeHeroe) {
             return res.status(400).json({
-                ok: false,
-                msg: 'Ya existe un Heroe llamado: ' + nombre
-            });
+                ok:false,
+                msg: 'Ya existe un Heroe llamado:' + nombre
+            })
         }
 
-        // Validar productora si fue enviada
-        if (productora_id !== undefined && productora_id !== null) {
-            const [productora] = await bdmysqlNube.query(
-                'SELECT id FROM casas_productoras_heroes WHERE id = ?',
-                {
-                    replacements: [productora_id]
-                }
-            );
+        // Guardar en BD
+        newHeroe = await heroe.save();
 
-            if (productora.length === 0) {
-                return res.status(400).json({
-                    ok: false,
-                    msg: 'La casa productora indicada no existe'
-                });
-            }
-        }
+        //console.log(newHeroe.null);
+        //Ajusta el Id del nuevo registro al Heroe
+        heroe.id = newHeroe.null;
 
-        const heroe = new Heroes({
-            nombre,
-            bio,
-            img,
-            aparicion,
-            casa,
-            productora_id
-        });
-
-        const newHeroe = await heroe.save();
-
-        res.json({
-            ok: true,
-            msg: 'Heroe INSERTADO',
-            data: newHeroe
+        res.json({ok:true,
+            msg:'Heroe INSERTADO',
+            data:heroe
         });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            ok: false,
+        res.status(500).json({ok:false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
     }
-};
 
+}
+
+
+//UPDATE heroe
+//SET var = ,
+//      var1 = ?
+//WHERE id = :id
 const heroePut = async (req, res = response) => {
+
     const { id } = req.params;
-    const { body } = req;
+    const { body} = req;
+   //const { _id, password, google, correo, ...resto } = req.body;
+
+    console.log(id);
+    console.log(body);
 
     try {
+
         const heroe = await Heroes.findByPk(id);
 
         if (!heroe) {
-            return res.status(404).json({
-                ok: false,
+            return res.status(404).json({ok:false,
                 msg: 'No existe un heroe con el id: ' + id
-            });
+            })
         }
 
-        // Validar productora si fue enviada
-        if (body.productora_id !== undefined && body.productora_id !== null) {
-            const [productora] = await bdmysqlNube.query(
-                'SELECT id FROM casas_productoras_heroes WHERE id = ?',
-                {
-                    replacements: [body.productora_id]
-                }
-            );
-
-            if (productora.length === 0) {
-                return res.status(400).json({
-                    ok: false,
-                    msg: 'La casa productora indicada no existe'
-                });
-            }
-        }
-
+        console.log(body)
+       
         await heroe.update(body);
 
         res.json({
-            ok: true,
-            msg: "Heroe ACTUALIZADO",
-            data: heroe
+            ok:true,
+            msg:"Heroe ACTUALIZADO",
+            data:heroe
         });
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            ok: false,
+        res.status(500).json({ok:false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
+
+
     }
-};
+
+}
+
 
 const heroeDelete = async (req, res = response) => {
+   
     const { id } = req.params;
 
+    console.log(id);
+ 
     try {
+
         const heroe = await Heroes.findByPk(id);
 
         if (!heroe) {
-            return res.status(404).json({
-                ok: false,
+            return res.status(404).json({ok:false,
                 msg: 'No existe un heroe con el id: ' + id
-            });
+            })
         }
 
+
+        //Borrado Logico.
+        //await heroe.update({estado:false});
+
+
+        //Borrado de la BD
         await heroe.destroy();
 
-        res.json({
-            ok: true,
-            msg: "Heroe ELIMINADO",
-            data: heroe,
+
+        res.json({ok:true,
+            msg:"Heroe ELIMINADO",
+            data:heroe,
         });
+
 
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            ok: false,
+        res.status(500).json({ok:false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
+
     }
-};
+}
+
 
 module.exports = {
     heroesGet,
@@ -217,4 +254,4 @@ module.exports = {
     heroesPost,
     heroePut,
     heroeDelete
-};
+}

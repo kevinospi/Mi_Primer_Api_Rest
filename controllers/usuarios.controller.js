@@ -1,34 +1,46 @@
-const { response } = require('express');
 const { Usuarios } = require('../models/usuarios.model');
 
 const bcryptjs = require("bcryptjs");
 const { generarJWT } = require("../helpers/generar-jwt");
 
-// INSERT un usuario
+
+//INSERT un usuario
 const usuariosPost = async (req, res = response) => {
+
+    //Desestructuracion de los Datos, desde el BODY, que es donde estamos pasando la informacion
     const { nombre, correo, password, img, rol, google } = req.body;
 
     const usuario = new Usuarios({ nombre, correo, password, img, rol, google });
 
     try {
-        const existeUsuario = await Usuarios.findOne({ where: { correo: correo } });
+       
+        const existeUsuario = await Usuarios.findOne({ where: { correo: correo} });
 
         if (existeUsuario) {
-            return res.status(400).json({
-                ok: false,
+            return res.status(400).json({ok:false,
                 msg: 'Ya existe un Usuario con el correo ' + correo
-            });
+            })
         }
 
+        console.log("Sin encriptar",usuario.password);
+
+        //Encryptar la constraseña
         const salt = bcryptjs.genSaltSync();
         usuario.password = bcryptjs.hashSync(usuario.password, salt);
 
-        const newUsuario = await usuario.save();
+        console.log("Encriptado",usuario.password);
+
+        // Guardar en BD
+        newUsuario = await usuario.save();
+
+        //console.log(newHeroe.null);
+        //Ajusta el Id del nuevo registro al Usuario
+        usuario.id = newUsuario.null;
 
         res.json({
-            ok: true,
-            msg: "Usuario Creado",
-            data: newUsuario
+            ok:true,
+            msg:"Usuario Creado",
+            data:usuario
         });
 
     } catch (error) {
@@ -37,40 +49,55 @@ const usuariosPost = async (req, res = response) => {
             ok: false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
+
     }
-};
+
+}
+
 
 const login = async (req, res = response) => {
+
     const { correo, password } = req.body;
 
     try {
-        const usuario = await Usuarios.findOne({ where: { correo: correo } });
-        console.log(usuario);
+     
 
+        const usuario = await Usuarios.findOne({ where: { correo: correo} });
+        console.log(usuario);
+       
         if (!usuario) {
-            return res.status(400).json({
-                ok: false,
-                msg: "Usuario / Password no son correctos - correo: " + correo,
-            });
+            return res
+                .status(400)
+                .json({
+                    ok: false,
+                    msg: "Usuario / Password no son correctos - correo: " + correo,
+                });
         }
 
+        // Verificar si el usuario esta activo
         if (!usuario.estado) {
-            return res.status(400).json({
-                ok: false,
-                msg: "Usuario / Password no son correctos - estado: false",
-            });
+            return res
+                .status(400)
+                .json({
+                    ok: false,
+                    msg: "Usuario / Password no son correctos - estado: false",
+                });
         }
 
         const validaPassword = bcryptjs.compareSync(password, usuario.password);
 
+        // Verificar la contraseña
         if (!validaPassword) {
-            return res.status(400).json({
-                ok: false,
-                msg: "Usuario / Password no son correctos - password",
-            });
+            return res
+                .status(400)
+                .json({
+                    ok: false,
+                    msg: "Usuario / Password no son correctos - password",
+                });
         }
 
+        // Generar el JWT
         const token = await generarJWT(usuario.id);
 
         res.json({
@@ -90,8 +117,12 @@ const login = async (req, res = response) => {
     }
 };
 
+
+//SELECT * FROM usuarios
 const usuariosGet = async (req, res = response) => {
+
     try {
+        //select * from usuarios;
         const unosUsuarios = await Usuarios.findAll();
 
         res.json({
@@ -105,12 +136,15 @@ const usuariosGet = async (req, res = response) => {
             ok: false,
             msg: 'Hable con el Administrador',
             err: error
-        });
+        })
+
     }
-};
+}
 
 module.exports = {
     usuariosPost,
     login,
     usuariosGet
-};
+}
+
+
